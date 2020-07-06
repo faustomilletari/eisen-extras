@@ -4,7 +4,9 @@ import torch
 
 from torchio.data import Subject, Image
 from torchio.transforms import RescaleIntensity as TorchIORescaleIntensity
+from torchio.transforms import ZNormalization as TorchIOZNormalization
 from eisen_extras.torchio.transforms import RescaleIntensity
+from eisen_extras.torchio.transforms import ZNormalization
 
 
 class TestRescaleIntensity:
@@ -78,4 +80,51 @@ class TestRescaleIntensity:
         assert isinstance(test_result['data'], np.ndarray)
 
         assert np.all(reference_result['data'].tensor.numpy() == test_result['data'])
+
+
+class TestZNormalization:
+    def setup_class(self):
+        self.data = {
+            'data': np.random.rand(10, 10, 10).astype(dtype=np.float32) * 255,
+            'mask': (np.random.rand(10, 10, 10) > 0.5).astype(dtype=bool)
+        }
+
+        self.subject = Subject(
+            data=Image(tensor=self.data['data'], type=torchio.INTENSITY),  # 4D input required
+            mask={'data': torch.from_numpy(self.data['mask'][np.newaxis])}
+        )
+
+    def test_no_mask(self):
+        tform_ref = TorchIOZNormalization()
+
+        tform_tst = ZNormalization(
+            ['data'],
+        )
+
+        test_result = tform_tst(self.data)
+        reference_result = tform_ref.apply_transform(self.subject)
+
+        assert isinstance(reference_result['data'].tensor.numpy(), np.ndarray)
+        assert isinstance(test_result['data'], np.ndarray)
+
+        assert np.all(reference_result['data'].tensor.numpy() == test_result['data'])
+
+    def test_mask(self):
+        tform_ref = TorchIOZNormalization(
+            masking_method='mask'
+        )
+
+        tform_tst = ZNormalization(
+            ['data'],
+            mask_field='mask'
+        )
+
+        test_result = tform_tst(self.data)
+        reference_result = tform_ref.apply_transform(self.subject)
+
+        assert isinstance(reference_result['data'].tensor.numpy(), np.ndarray)
+        assert isinstance(test_result['data'], np.ndarray)
+
+        assert np.all(reference_result['data'].tensor.numpy() == test_result['data'])
+
 
