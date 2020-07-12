@@ -2,9 +2,13 @@ import torch
 
 from typing import Tuple, List
 
+from PIL import Image
+
 from torchio.transforms import RescaleIntensity as TorchIORescaleIntensity
 from torchio.transforms import ZNormalization as TorchIOZNormalization
-from torchio.transforms import HistogramStandardization as TorchIOHistogramStandardization
+from torchio.transforms import (
+    HistogramStandardization as TorchIOHistogramStandardization,
+)
 
 from torchio.transforms import CropOrPad as TorchIOCropOrPad
 from torchio.transforms import Crop as TorchIOCrop
@@ -15,12 +19,12 @@ from torchio.transforms import ToCanonical as TorchIOToCanonical
 
 class RescaleIntensity:
     def __init__(
-            self,
-            fields: List[str],
-            out_min_max: Tuple[float, float],
-            percentiles: Tuple[int, int] = (0, 100),
-            mask_field: str = None,
-            p: float = 1,
+        self,
+        fields: List[str],
+        out_min_max: Tuple[float, float],
+        percentiles: Tuple[int, int] = (0, 100),
+        mask_field: str = None,
+        p: float = 1,
     ):
         self.fields = fields
         self.mask_field = mask_field
@@ -34,9 +38,7 @@ class RescaleIntensity:
                 mask = torch.from_numpy(data[self.mask_field]).bool()
 
             data_tensor = self.tform.rescale(
-                tensor=torch.from_numpy(data[field]),
-                mask=mask,
-                image_name=field
+                tensor=torch.from_numpy(data[field]), mask=mask, image_name=field
             )
 
             data[field] = data_tensor.numpy()
@@ -50,11 +52,9 @@ class ZNormalization:
     torchio.transforms.ZNormalization but exposes an interface compatible with Eisen and its functionality
     uses the data processing paradigm employed in Eisen.
     """
+
     def __init__(
-            self,
-            fields: List[str],
-            mask_field: str = None,
-            p: float = 1,
+        self, fields: List[str], mask_field: str = None, p: float = 1,
     ):
         """
         Initializes an object of type eisen_extras.torchio.transforms.ZNormalization
@@ -85,8 +85,7 @@ class ZNormalization:
                 mask = torch.from_numpy(data[self.mask_field]).bool()
 
             data_tensor = self.tform.znorm(
-                tensor=torch.from_numpy(data[field]),
-                mask=mask
+                tensor=torch.from_numpy(data[field]), mask=mask
             )
 
             data[field] = data_tensor.numpy()
@@ -96,20 +95,18 @@ class ZNormalization:
 
 class HistogramStandardization:
     def __init__(
-            self,
-            fields: List[str],
-            histogram_field: str,
-            mask_field: str = None,
-            p: float = 1,
+        self,
+        fields: List[str],
+        histogram_field: str,
+        mask_field: str = None,
+        p: float = 1,
     ):
         self.fields = fields
         self.histogram_field = histogram_field
         self.mask_field = mask_field
 
         self.tform = TorchIOHistogramStandardization(
-            landmarks={},  # just for init
-            masking_method=mask_field,
-            p=p
+            landmarks={}, masking_method=mask_field, p=p  # just for init
         )
 
     def __call__(self, data):
@@ -122,7 +119,7 @@ class HistogramStandardization:
             data_tensor = self.tform.normalize(
                 tensor=torch.from_numpy(data[field]),
                 landmarks=data[self.histogram_field],
-                mask=mask
+                mask=mask,
             )
 
             data[field] = data_tensor.numpy()
@@ -132,12 +129,12 @@ class HistogramStandardization:
 
 class CropOrPad:
     def __init__(
-            self,
-            fields: List[str],
-            target_shape: int,
-            padding_mode: str,
-            mask_field: str = None,
-            p: float = 1,
+        self,
+        fields: List[str],
+        target_shape: int,
+        padding_mode: str,
+        mask_field: str = None,
+        p: float = 1,
     ):
         self.fields = fields
         self.mask_field = mask_field
@@ -145,4 +142,3 @@ class CropOrPad:
 
     def __call__(self, data: dict) -> dict:
         pass
-
